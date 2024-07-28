@@ -6,11 +6,10 @@ import * as d3 from "d3";
 const NameSearch = () => {
   const [name, setName] = useState("");
   const [data, setData] = useState({});
-  const [secondData, setSecondData] = useState({});
   const [selectedName, setSelectedName] = useState("");
-  const [secondSelectedName, setSecondSelectedName] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+
   const resultsPerPage = 10;
 
   useEffect(() => {
@@ -36,25 +35,8 @@ const NameSearch = () => {
   };
 
   const handleNameClick = (name, data) => {
-    if (name === selectedName) {
-      setSelectedName("");
-      setData({});
-      return;
-    }
-    if (name === secondSelectedName) {
-      setSecondSelectedName("");
-      setSecondData({});
-      return;
-    }
-
-    if (selectedName) {
-      setSecondSelectedName(name);
-      setSecondData(data);
-      return;
-    } else {
-      setSelectedName(name);
-      setData(data);
-    }
+    setSelectedName(name);
+    setData(data);
   };
 
   const indexOfLastResult = currentPage * resultsPerPage;
@@ -64,32 +46,53 @@ const NameSearch = () => {
     indexOfLastResult
   );
 
+  const totalPages = Math.ceil(searchResults.length / resultsPerPage);
+
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const getPaginationRange = () => {
+    const totalVisiblePages = 5;
+    const halfVisiblePages = Math.floor(totalVisiblePages / 2);
+    let start = Math.max(1, currentPage - halfVisiblePages);
+    let end = Math.min(totalPages, currentPage + halfVisiblePages);
+
+    if (end - start < totalVisiblePages - 1) {
+      start = Math.max(1, end - totalVisiblePages + 1);
+    }
+
+    if (end - start < totalVisiblePages - 1) {
+      end = Math.min(totalPages, start + totalVisiblePages - 1);
+    }
+
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  };
+
+  const paginationRange = getPaginationRange();
+
   return (
-    <div className="flex my-3">
-      <div className="w-1/2 flex flex-col items-center">
-        <div className="flex items-center">
+    <div className="flex m-3">
+      <div className="w-1/3 flex flex-col items-center">
+        <div className="flex items-center w-full">
           <input
             type="text"
-            className="border-2 border-gray-300 rounded-lg p-2 mr-2 w-[300px]"
+            className="border-2 border-gray-300 rounded-lg p-2 w-full"
             placeholder="Search for a name"
             value={name}
             onChange={(e) => handleUpdate(e.target.value)}
           />
         </div>
-        <div>
+        <div className="w-full">
           {/* Render the current page of search results */}
           {currentResults.map(({ name, data }) => (
-            <div key={name}>
+            <div key={name} className="w-full">
               <div
                 onClick={() => {
                   handleNameClick(name, data);
                 }}
-                className={`cursor-pointer bg-gray-200 p-2 rounded-lg my-2 w-[300px] text-center ${
-                  selectedName === name || secondSelectedName === name
+                className={`cursor-pointer p-2 rounded-lg my-2 w-full text-center ${
+                  selectedName === name
                     ? "bg-green-500 text-white"
-                    : ""
+                    : "bg-gray-200"
                 }`}
               >
                 {name}
@@ -98,34 +101,61 @@ const NameSearch = () => {
           ))}
         </div>
         {/* Pagination controls */}
-        <div className="flex mt-4">
-          {searchResults.length > resultsPerPage && (
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="mr-2 px-4 py-2 bg-gray-200 rounded-lg"
-            >
-              Previous
-            </button>
+        <div className="flex mt-4 space-x-1 w-full justify-center">
+          {currentPage > 1 && (
+            <>
+              <button onClick={() => paginate(1)} className="px-2 py-1 text-sm">
+                First
+              </button>
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                className="px-2 py-1 text-sm"
+              >
+                Previous
+              </button>
+            </>
           )}
-          {searchResults.length > resultsPerPage && (
+          {paginationRange.map((number) => (
             <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={indexOfLastResult >= searchResults.length}
-              className="px-4 py-2 bg-gray-200 rounded-lg"
+              key={number}
+              onClick={() => paginate(number)}
+              className={`${
+                currentPage === number ? "text-blue-500" : "text-gray-200"
+              } text-sm`}
             >
-              Next
+              {number}
             </button>
+          ))}
+          <input
+            type="text"
+            className="w-12 p-1 m-1 border border-gray-500 rounded-md"
+            onChange={(e) => {
+              const pageNumber = parseInt(e.target.value);
+              if (pageNumber >= 1 && pageNumber <= totalPages) {
+                paginate(pageNumber);
+              }
+            }}
+          />
+          {currentPage < totalPages && (
+            <>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                className="px-2 py-1 text-sm"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => paginate(totalPages)}
+                className="px-2 py-1 text-sm"
+              >
+                Last
+              </button>
+            </>
           )}
         </div>
       </div>
-      <div className="w-1/2 flex flex-col items-center">
-        <Info
-          name={selectedName}
-          data={data}
-          secondName={secondSelectedName}
-          secondData={secondData}
-        />
+      <div className="w-2/3 flex flex-col items-center">
+        <Info name={selectedName} data={data} />
       </div>
     </div>
   );
@@ -133,8 +163,18 @@ const NameSearch = () => {
 
 export default NameSearch;
 
-const Info = ({ name, data, secondName, secondData }) => {
-  const [selectedGender, setSelectedGender] = useState("M");
+const Info = ({ name, data }) => {
+  const [selectedGender, setSelectedGender] = useState("");
+
+  useEffect(() => {
+    if (data) {
+      if (data["M"]) {
+        setSelectedGender("M");
+      } else if (data["F"]) {
+        setSelectedGender("F");
+      }
+    }
+  }, [data]);
 
   if (!data || Object.keys(data).length === 0) {
     return <div className="text-3xl">Please select a name.</div>;
@@ -149,8 +189,8 @@ const Info = ({ name, data, secondName, secondData }) => {
       <div className="flex gap-3">
         {maleData && (
           <div
-            className={`cursor-pointer bg-gray-200 p-2 rounded-lg my-2 w-[100px] text-center ${
-              selectedGender === "M" ? "bg-blue-500 text-white" : ""
+            className={`cursor-pointer p-2 rounded-lg my-2 w-[100px] text-center ${
+              selectedGender === "M" ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}
             onClick={() => {
               setSelectedGender("M");
@@ -161,8 +201,8 @@ const Info = ({ name, data, secondName, secondData }) => {
         )}
         {femaleData && (
           <div
-            className={`cursor-pointer bg-gray-200 p-2 rounded-lg my-2 w-[100px] text-center ${
-              selectedGender === "F" ? "bg-pink-300 text-white" : ""
+            className={`cursor-pointer p-2 rounded-lg my-2 w-[100px] text-center ${
+              selectedGender === "F" ? "bg-pink-300 text-white" : "bg-gray-200"
             }`}
             onClick={() => {
               setSelectedGender("F");
@@ -231,7 +271,7 @@ const NameGraph = ({ name, gender }) => {
 
     const g = svg
       .append("g")
-      .attr("transform", `translate(${margin.left + 15},${margin.top})`);
+      .attr("transform", `translate(${margin.left + 30},${margin.top})`);
 
     g.selectAll(".bar")
       .data(dataByGender)
@@ -245,17 +285,24 @@ const NameGraph = ({ name, gender }) => {
       .attr("y", height)
       .attr("width", barWidth)
       .attr("height", 0)
-      .attr("fill", gender === "M" ? "steelblue" : "pink")
+      .attr("fill", gender === "M" ? "#3b82f6" : "#f9a8d4")
       .transition()
       .duration(750)
       .delay((d, i) => i * 50)
       .attr("y", (d) => yScale(d.Count))
       .attr("height", (d) => height - yScale(d.Count));
 
+    // Determine n based on the number of years
+    const n = Math.ceil(years.length / 10);
+
     g.append("g")
       .attr("class", "x-axis")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale))
+      .call(
+        d3
+          .axisBottom(xScale)
+          .tickValues(xScale.domain().filter((d, i) => !(i % n)))
+      )
       .selectAll("text")
       .attr("dy", "1em")
       .attr("transform", "rotate(-45)")
