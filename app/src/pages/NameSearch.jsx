@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import names from "../../../dataset/names_data.json";
 import * as d3 from "d3";
-import { useApp } from "../contexts/AppContext";
+import { useAnimation } from "../contexts/AnimationContext";
 
 const NameSearch = () => {
   const [name, setName] = useState("");
@@ -205,7 +205,7 @@ const NameSearch = () => {
           )}
         </div>
       </div>
-      <div className="w-2/3 flex flex-col items-center">
+      <div className="w-2/3 flex flex-col items-center justify-center">
         <Info
           name={selectedName}
           data={data}
@@ -229,6 +229,14 @@ const Info = ({ name, data, secondName, secondData }) => {
       setSelectedGender("F");
     }
   }, [data]);
+
+  useEffect(() => {
+    if (secondData && secondData["M"] && data && data["M"]) {
+      setSelectedGender("M");
+    } else if (secondData && secondData["F"] && data && data["F"]) {
+      setSelectedGender("F");
+    }
+  }, [secondData]);
 
   if (!data || Object.keys(data).length === 0) {
     return <div className="text-3xl">Please select a name.</div>;
@@ -353,7 +361,7 @@ const Info = ({ name, data, secondName, secondData }) => {
 
 const NameGraph = ({ name, data, secondName, secondData, gender }) => {
   const svgRef = useRef();
-  const { isOn } = useApp();
+  const { animationsEnabled, animationSpeed } = useAnimation();
 
   useEffect(() => {
     if (!name && !secondName) return;
@@ -362,7 +370,7 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
     const secondaryData = secondData || [];
 
     const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove(); // Clear previous elements
+    svg.selectAll("*").remove();
 
     const margin = { top: 40, right: 40, bottom: 40, left: 40 };
     const width = +svg.attr("width") - (margin.left + margin.right + 20);
@@ -412,6 +420,18 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
       .append("g")
       .attr("transform", `translate(${margin.left + 30},${margin.top})`);
 
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("background-color", "white")
+      .style("border", "1px solid #ccc")
+      .style("padding", "5px")
+      .style("border-radius", "3px")
+      .style("pointer-events", "none")
+      .style("opacity", 0);
+
     g.selectAll(".bar.primary")
       .data(combinedCounts)
       .enter()
@@ -425,9 +445,21 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
       .attr("width", barWidth / 2)
       .attr("height", 0)
       .attr("fill", gender === "M" ? "#3b82f6" : "#f9a8d4")
+      .on("mouseover", (event, d) => {
+        tooltip.transition().duration(300).style("opacity", 1);
+        tooltip
+          .html(`Name: ${name}<br>Year: ${d.year}<br>Count: ${d.primary}`)
+          .style("left", event.pageX + 5 + "px")
+          .style("top", event.pageY - 28 + "px");
+      })
+      .on("mouseout", () => {
+        tooltip.transition().duration(500).style("opacity", 0);
+      })
       .transition()
-      .duration(isOn ? 750 : 0)
-      .delay((d, i) => (isOn ? i * 50 : 0))
+      .duration(animationsEnabled ? 750 * Math.pow(animationSpeed, -1) : 0)
+      .delay((d, i) =>
+        animationsEnabled ? i * 50 * Math.pow(animationSpeed, -1) * 2 : 0
+      )
       .attr("y", (d) => yScale(d.primary))
       .attr("height", (d) => height - yScale(d.primary));
 
@@ -448,9 +480,23 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
         .attr("width", barWidth / 2)
         .attr("height", 0)
         .attr("fill", gender === "M" ? "#1e40af" : "#db2777")
+        .on("mouseover", (event, d) => {
+          tooltip.transition().duration(200).style("opacity", 1);
+          tooltip
+            .html(
+              `Name: ${secondName}<br>Year: ${d.year}<br>Count: ${d.secondary}`
+            )
+            .style("left", event.pageX + 5 + "px")
+            .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseout", () => {
+          tooltip.transition().duration(500).style("opacity", 0);
+        })
         .transition()
-        .duration(isOn ? 750 : 0)
-        .delay((d, i) => (isOn ? i * 50 : 0))
+        .duration(animationsEnabled ? 750 * Math.pow(animationSpeed, -1) : 0)
+        .delay((d, i) =>
+          animationsEnabled ? i * 50 * Math.pow(animationSpeed, -1) * 2 : 0
+        )
         .attr("y", (d) => yScale(d.secondary))
         .attr("height", (d) => height - yScale(d.secondary));
     }
@@ -471,14 +517,16 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    g.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale));
+    g.append("g")
+      .attr("class", "y-axis")
+      .call(d3.axisLeft(yScale).tickFormat(d3.format("d")));
 
     // Add x-axis label
     svg
       .append("text")
       .attr(
         "transform",
-        `translate(${width / 2 + margin.left},${height + margin.top + 50})`
+        `translate(${width / 2 + margin.left + 30},${height + margin.top + 50})`
       )
       .style("text-anchor", "middle")
       .text("Year");
