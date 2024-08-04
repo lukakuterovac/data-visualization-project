@@ -1,7 +1,7 @@
-/* eslint-disable react/prop-types */
 import { useState, useEffect, useRef } from "react";
 import names from "../../../dataset/names_data.json";
 import * as d3 from "d3";
+import { useApp } from "../contexts/AppContext";
 
 const NameSearch = () => {
   const [name, setName] = useState("");
@@ -353,6 +353,7 @@ const Info = ({ name, data, secondName, secondData }) => {
 
 const NameGraph = ({ name, data, secondName, secondData, gender }) => {
   const svgRef = useRef();
+  const { isOn } = useApp();
 
   useEffect(() => {
     if (!name && !secondName) return;
@@ -425,8 +426,8 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
       .attr("height", 0)
       .attr("fill", gender === "M" ? "#3b82f6" : "#f9a8d4")
       .transition()
-      .duration(750)
-      .delay((d, i) => i * 50)
+      .duration(isOn ? 750 : 0)
+      .delay((d, i) => (isOn ? i * 50 : 0))
       .attr("y", (d) => yScale(d.primary))
       .attr("height", (d) => height - yScale(d.primary));
 
@@ -448,8 +449,8 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
         .attr("height", 0)
         .attr("fill", gender === "M" ? "#1e40af" : "#db2777")
         .transition()
-        .duration(750)
-        .delay((d, i) => i * 50)
+        .duration(isOn ? 750 : 0)
+        .delay((d, i) => (isOn ? i * 50 : 0))
         .attr("y", (d) => yScale(d.secondary))
         .attr("height", (d) => height - yScale(d.secondary));
     }
