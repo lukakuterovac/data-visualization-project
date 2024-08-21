@@ -75,10 +75,10 @@ const TimelineWithWordCloud = ({ data }) => {
           size: sizeScale(d.size),
         }))
       )
-      .padding(2)
       .rotate(() => ~~(Math.random() * 2) * 90)
-      .font("Impact")
       .fontSize((d) => d.size)
+      .font("Arial")
+      .padding(4)
       .on("end", (words) => {
         setWordCloudData(words);
       });
@@ -94,23 +94,44 @@ const TimelineWithWordCloud = ({ data }) => {
 
   const draw = (words) => {
     const wordCloudSvg = d3.select(wordCloudRef.current);
+
     wordCloudSvg.selectAll("*").remove();
 
-    wordCloudSvg
-      .attr("width", 800)
-      .attr("height", 400)
+    wordCloudSvg.attr("width", 800).attr("height", 400);
+
+    const textElements = wordCloudSvg
       .append("g")
       .attr("transform", "translate(400,200)")
       .selectAll("text")
-      .data(words)
+      .data(words);
+
+    textElements
       .enter()
       .append("text")
       .style("font-size", (d) => d.size + "px")
-      .style("font-family", "Impact")
       .style("fill", (d, i) => d3.schemeCategory10[i % 10])
       .attr("text-anchor", "middle")
+      .attr("transform", "translate(0,0)rotate(0)")
+      .style("opacity", 0)
+      .text((d) => d.text)
+      .transition()
+      .duration(500)
       .attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
-      .text((d) => d.text);
+      .style("opacity", 1);
+
+    textElements
+      .transition()
+      .duration(500)
+      .attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+      .style("opacity", 1);
+
+    textElements
+      .exit()
+      .transition()
+      .duration(500)
+      .attr("transform", "translate(0,0)rotate(0)")
+      .style("opacity", 0)
+      .remove();
   };
 
   return (
@@ -157,8 +178,6 @@ const TimelineWithWordCloud = ({ data }) => {
           <option value="2000">0.5x</option>
           <option value="1000">1x</option>
           <option value="500">2x</option>
-          <option value="250">4x</option>
-          <option value="125">8x</option>
         </select>
       </div>
       <div className="w-full flex justify-center">
