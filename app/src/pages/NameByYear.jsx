@@ -2,23 +2,26 @@
 import names from "../../../dataset/name_by_year.json";
 import { useState, useRef, useEffect } from "react";
 import * as d3 from "d3";
+import { ArrowDown01, ArrowDownAZ, ArrowUp01, ArrowUpAZ } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
 const PAGE_BUTTONS_LIMIT = 5;
 
 const NameByYear = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState("Year");
+  const [sortOrder, setSortOrder] = useState("Asc");
 
   const totalPages = Math.ceil(names.length / ITEMS_PER_PAGE);
 
-  const getCurrentData = () => {
+  const getCurrentData = (data) => {
     const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIdx = startIdx + ITEMS_PER_PAGE;
-    const currentData = names.slice(startIdx, endIdx);
+    const currentData = data.slice(startIdx, endIdx);
 
     if (currentData.length < ITEMS_PER_PAGE && startIdx > 0) {
       const missingItemsCount = ITEMS_PER_PAGE - currentData.length;
-      const additionalItems = names.slice(
+      const additionalItems = data.slice(
         Math.max(0, startIdx - missingItemsCount),
         startIdx
       );
@@ -51,7 +54,9 @@ const NameByYear = () => {
           key={i}
           onClick={() => handlePageChange(i)}
           disabled={i === currentPage}
-          className={`m-2 ${i === currentPage ? "border-b border-black" : ""}`}
+          className={`m-2 ${
+            i === currentPage ? "text-blue-500" : "text-gray-200"
+          }`}
         >
           {i}
         </button>
@@ -93,14 +98,78 @@ const NameByYear = () => {
     );
   };
 
-  const currentData = getCurrentData();
+  const sortData = (data) => {
+    if (sortField === "Year") {
+      return data.sort((a, b) => {
+        const order = sortOrder === "Asc" ? 1 : -1;
+        return order * (Number(a.Year) - Number(b.Year));
+      });
+    } else if (sortField === "Count") {
+      return data.sort((a, b) => {
+        const order = sortOrder === "Asc" ? 1 : -1;
+        return order * (a.Count - b.Count);
+      });
+    } else if (sortField === "Name") {
+      return data.sort((a, b) => {
+        const nameOrder = a.Name.localeCompare(b.Name);
+        if (nameOrder === 0) {
+          const yearOrder = sortOrder === "Asc" ? 1 : -1;
+          return yearOrder * (Number(a.Year) - Number(b.Year));
+        }
+        return nameOrder;
+      });
+    } else {
+      return data;
+    }
+  };
+
+  const changeSortOrder = () => {
+    setSortOrder(sortOrder === "Asc" ? "Desc" : "Asc");
+  };
+
+  const renderSortOptions = () => {
+    const fields = ["Year", "Count", "Name"];
+
+    return (
+      <div className="flex items-center justify-center gap-2">
+        <div>Sort by:</div>
+        <select
+          value={sortField}
+          onChange={(e) => setSortField(e.target.value)}
+          className="p-2 border rounded-md"
+        >
+          {fields.map((field) => (
+            <option key={field} value={field}>
+              {field}
+            </option>
+          ))}
+        </select>
+        <button onClick={changeSortOrder}>
+          {sortField === "Name" ? (
+            sortOrder === "Asc" ? (
+              <ArrowDownAZ size={20} />
+            ) : (
+              <ArrowUpAZ size={20} />
+            )
+          ) : sortOrder === "Asc" ? (
+            <ArrowDown01 size={20} />
+          ) : (
+            <ArrowUp01 size={20} />
+          )}
+        </button>
+      </div>
+    );
+  };
+
+  const currentData = getCurrentData(sortData(names));
 
   return (
     <div className="my-3">
       <h1 className="text-center text-3xl">Most popular baby name each year</h1>
       <div className="min-h-fit">
         <div className="w-full min-h-full p-2 flex justify-evenly">
-          <div>
+          <div className="flex flex-col items-center">
+            {renderSortOptions()}
             <table className="w-full">
               <thead>
                 <tr>
@@ -173,6 +242,18 @@ const BarChart = ({ data }) => {
 
     svg.append("g").call(d3.axisLeft(y));
 
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("background-color", "white")
+      .style("border", "1px solid #ccc")
+      .style("padding", "5px")
+      .style("border-radius", "3px")
+      .style("pointer-events", "none")
+      .style("opacity", 0);
+
     const bars = svg.selectAll(".bar").data(data);
 
     bars
@@ -183,7 +264,17 @@ const BarChart = ({ data }) => {
       .attr("width", x.bandwidth())
       .attr("y", height)
       .attr("height", 0)
-      .attr("fill", (d) => (d.Gender === "M" ? "steelblue" : "pink"))
+      .attr("fill", (d) => (d.Gender === "M" ? "#3b82f6" : "#f9a8d4"))
+      .on("mouseover", (event, d) => {
+        tooltip.transition().duration(200).style("opacity", 0.9);
+        tooltip
+          .html(`${d.Count}`)
+          .style("left", event.pageX + 5 + "px")
+          .style("top", event.pageY - 28 + "px");
+      })
+      .on("mouseout", () => {
+        tooltip.transition().duration(500).style("opacity", 0);
+      })
       .merge(bars)
       .transition()
       .duration(750)
