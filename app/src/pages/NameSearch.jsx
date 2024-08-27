@@ -112,14 +112,14 @@ const NameSearch = () => {
         <div className="flex items-center w-full">
           <input
             type="text"
-            className="border-2 border-gray-300 rounded-lg p-2 mr-2 flex-grow"
+            className="border-2 border-gray-300 rounded-lg p-2 flex-grow"
             placeholder="Search for a name"
             value={name}
             onChange={(e) => handleUpdate(e.target.value)}
           />
           {selectedName && (
             <button
-              className="mr-2 rounded-lg bg-red-500 text-white p-2 flex-grow min-w-fit"
+              className="ml-2 rounded-lg bg-red-500 text-white p-2 flex-grow min-w-fit"
               onClick={handleDeselect(selectedName)}
             >
               {selectedName}
@@ -127,7 +127,7 @@ const NameSearch = () => {
           )}
           {secondName && (
             <button
-              className="rounded-lg bg-red-500 text-white p-2 flex-grow min-w-fit"
+              className="ml-2 rounded-lg bg-red-500 text-white p-2 flex-grow min-w-fit"
               onClick={handleDeselect(secondName)}
             >
               {secondName}
