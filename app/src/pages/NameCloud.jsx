@@ -3,6 +3,7 @@ import * as d3 from "d3";
 import cloud from "d3-cloud";
 import names from "../../../dataset/name_counts_per_year.json";
 import { Play, Pause, RotateCcw } from "lucide-react";
+import { useAnimation } from "../contexts/AnimationContext";
 
 const NameCloud = () => {
   return (
@@ -21,6 +22,7 @@ const TimelineWithWordCloud = ({ data }) => {
   const [wordCloudData, setWordCloudData] = useState([]);
   const [playbackSpeed, setPlaybackSpeed] = useState(1000);
   const [pendingWordCloudData, setPendingWordCloudData] = useState([]);
+  const { animationsEnabled } = useAnimation();
 
   const years = Object.keys(data).map((year) => +year);
   const firstYear = years[0];
@@ -95,43 +97,70 @@ const TimelineWithWordCloud = ({ data }) => {
   const draw = (words) => {
     const wordCloudSvg = d3.select(wordCloudRef.current);
 
+    // Clear any existing content
     wordCloudSvg.selectAll("*").remove();
 
+    // Set the size of the SVG
     wordCloudSvg.attr("width", 800).attr("height", 400);
 
+    // Select the text elements within the word cloud
     const textElements = wordCloudSvg
       .append("g")
       .attr("transform", "translate(400,200)")
       .selectAll("text")
       .data(words);
 
-    textElements
+    // Enter selection: new elements
+    const enteredText = textElements
       .enter()
       .append("text")
       .style("font-size", (d) => d.size + "px")
       .style("fill", (d, i) => d3.schemeCategory10[i % 10])
       .attr("text-anchor", "middle")
-      .attr("transform", "translate(0,0)rotate(0)")
-      .style("opacity", 0)
-      .text((d) => d.text)
-      .transition()
-      .duration(500)
-      .attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
-      .style("opacity", 1);
+      .text((d) => d.text);
 
-    textElements
-      .transition()
-      .duration(500)
-      .attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
-      .style("opacity", 1);
+    if (animationsEnabled) {
+      enteredText
+        .attr("transform", "translate(0,0)rotate(0)")
+        .style("opacity", 0)
+        .transition()
+        .duration(500)
+        .attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+        .style("opacity", 1);
+    } else {
+      enteredText
+        .attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+        .style("opacity", 1);
+    }
 
-    textElements
-      .exit()
-      .transition()
-      .duration(500)
-      .attr("transform", "translate(0,0)rotate(0)")
-      .style("opacity", 0)
-      .remove();
+    // Update selection: update existing elements
+    const updatedText = textElements;
+
+    if (animationsEnabled) {
+      updatedText
+        .transition()
+        .duration(500)
+        .attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+        .style("opacity", 1);
+    } else {
+      updatedText
+        .attr("transform", (d) => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+        .style("opacity", 1);
+    }
+
+    // Exit selection: remove old elements
+    const exitingText = textElements.exit();
+
+    if (animationsEnabled) {
+      exitingText
+        .transition()
+        .duration(500)
+        .attr("transform", "translate(0,0)rotate(0)")
+        .style("opacity", 0)
+        .remove();
+    } else {
+      exitingText.remove();
+    }
   };
 
   return (
@@ -175,9 +204,9 @@ const TimelineWithWordCloud = ({ data }) => {
           onChange={(e) => setPlaybackSpeed(+e.target.value)}
           className="border-2 rounded-md py-1 px-2"
         >
-          <option value="2000">0.5x</option>
-          <option value="1000">1x</option>
-          <option value="500">2x</option>
+          <option value="2000">2x</option>
+          <option value="1000">1s</option>
+          <option value="500">0.5s</option>
         </select>
       </div>
       <div className="w-full flex justify-center">
