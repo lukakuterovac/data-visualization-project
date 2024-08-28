@@ -414,7 +414,7 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
       .nice()
       .range([height, 0]);
 
-    const barWidth = Math.min(30, width / years.length); // Limit bar width to 30px or divide width evenly
+    const barWidth = Math.min(30, width / years.length);
 
     const g = svg
       .append("g")
@@ -501,7 +501,6 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
         .attr("height", (d) => height - yScale(d.secondary));
     }
 
-    // Determine n based on the number of years
     const n = Math.ceil(years.length / 10);
 
     g.append("g")
@@ -521,7 +520,6 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
       .attr("class", "y-axis")
       .call(d3.axisLeft(yScale).tickFormat(d3.format("d")));
 
-    // Add x-axis label
     svg
       .append("text")
       .attr(
@@ -531,7 +529,6 @@ const NameGraph = ({ name, data, secondName, secondData, gender }) => {
       .style("text-anchor", "middle")
       .text("Year");
 
-    // Add y-axis label
     svg
       .append("text")
       .attr(

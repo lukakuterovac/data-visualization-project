@@ -97,20 +97,16 @@ const TimelineWithWordCloud = ({ data }) => {
   const draw = (words) => {
     const wordCloudSvg = d3.select(wordCloudRef.current);
 
-    // Clear any existing content
     wordCloudSvg.selectAll("*").remove();
 
-    // Set the size of the SVG
     wordCloudSvg.attr("width", 800).attr("height", 400);
 
-    // Select the text elements within the word cloud
     const textElements = wordCloudSvg
       .append("g")
       .attr("transform", "translate(400,200)")
       .selectAll("text")
       .data(words);
 
-    // Enter selection: new elements
     const enteredText = textElements
       .enter()
       .append("text")
@@ -133,7 +129,6 @@ const TimelineWithWordCloud = ({ data }) => {
         .style("opacity", 1);
     }
 
-    // Update selection: update existing elements
     const updatedText = textElements;
 
     if (animationsEnabled) {
@@ -148,7 +143,6 @@ const TimelineWithWordCloud = ({ data }) => {
         .style("opacity", 1);
     }
 
-    // Exit selection: remove old elements
     const exitingText = textElements.exit();
 
     if (animationsEnabled) {
