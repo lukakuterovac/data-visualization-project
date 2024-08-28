@@ -49,7 +49,6 @@ const Home = () => {
           <li>Names and their frequencies by year</li>
           <li>Gender of the babies with each name</li>
           <li>Trends over time</li>
-          <li>Regional popularity</li>
         </ul>
         <p className="text-lg mt-4 text-justify">
           This rich dataset allows us to create a variety of visualizations to
@@ -63,9 +62,9 @@ const Home = () => {
           Currently, the app offers the following features:
         </p>
         <ul className="list-disc list-inside text-lg text-justify">
-          <li>Feature 1</li>
-          <li>Feature 2</li>
-          <li>Feature 3</li>
+          <li>Visualize the popularity trend of a name on bar charts</li>
+          <li>FCompare data for two names on one graph</li>
+          <li>Interactive word cloud visualization with a playable timeline</li>
         </ul>
       </section>
     </div>
