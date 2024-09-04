@@ -22,6 +22,7 @@ const TimelineWithWordCloud = ({ data }) => {
   const [wordCloudData, setWordCloudData] = useState([]);
   const [playbackSpeed, setPlaybackSpeed] = useState(1000);
   const [pendingWordCloudData, setPendingWordCloudData] = useState([]);
+  const [maxNames, setMaxNames] = useState(75);
   const { animationsEnabled } = useAnimation();
 
   const years = Object.keys(data).map((year) => +year);
@@ -69,10 +70,14 @@ const TimelineWithWordCloud = ({ data }) => {
       ])
       .range([10, 100]);
 
+    const limitedData = pendingWordCloudData
+      .sort((a, b) => b.size - a.size)
+      .slice(0, maxNames);
+
     const layout = cloud()
       .size([800, 400])
       .words(
-        pendingWordCloudData.map((d) => ({
+        limitedData.map((d) => ({
           text: d.text,
           size: sizeScale(d.size),
         }))
@@ -86,7 +91,7 @@ const TimelineWithWordCloud = ({ data }) => {
       });
 
     layout.start();
-  }, [pendingWordCloudData]);
+  }, [pendingWordCloudData, maxNames]);
 
   useEffect(() => {
     if (wordCloudData.length > 0) {
@@ -193,10 +198,22 @@ const TimelineWithWordCloud = ({ data }) => {
           <RotateCcw size={14} />
           Reset
         </button>
+        <label htmlFor="maxNames">Max names</label>
+        <select
+          value={maxNames}
+          onChange={(e) => setMaxNames(+e.target.value)}
+          className="border-2 rounded-md py-1 px-2"
+        >
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="75">75</option>
+        </select>
+        <label htmlFor="playbackSpeed">Playback speed</label>
         <select
           value={playbackSpeed}
           onChange={(e) => setPlaybackSpeed(+e.target.value)}
           className="border-2 rounded-md py-1 px-2"
+          id="playbackSpeed"
         >
           <option value="2000">2x</option>
           <option value="1000">1s</option>
