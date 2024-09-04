@@ -3,6 +3,7 @@ import names from "../../../dataset/name_by_year.json";
 import { useState, useRef, useEffect } from "react";
 import * as d3 from "d3";
 import { ArrowDown01, ArrowDownAZ, ArrowUp01, ArrowUpAZ } from "lucide-react";
+import { useAnimation } from "../contexts/AnimationContext";
 
 const ITEMS_PER_PAGE = 10;
 const PAGE_BUTTONS_LIMIT = 5;
@@ -202,6 +203,7 @@ const NameByYear = () => {
 export default NameByYear;
 
 const BarChart = ({ data }) => {
+  const { animationsEnabled, animationSpeed } = useAnimation();
   const chartRef = useRef(null);
 
   useEffect(() => {
@@ -277,8 +279,10 @@ const BarChart = ({ data }) => {
       })
       .merge(bars)
       .transition()
-      .duration(750)
-      .delay((d, i) => i * 50)
+      .duration(animationsEnabled ? 750 * Math.pow(animationSpeed, -1) : 0)
+      .delay((d, i) =>
+        animationsEnabled ? i * 50 * Math.pow(animationSpeed, -1) * 2 : 0
+      )
       .attr("y", (d) => y(d.Count))
       .attr("height", (d) => height - y(d.Count));
 
@@ -316,8 +320,10 @@ const BarChart = ({ data }) => {
       .attr("text-anchor", "middle")
       .merge(labels)
       .transition()
-      .duration(750)
-      .delay((d, i) => i * 50)
+      .duration(animationsEnabled ? 750 * Math.pow(animationSpeed, -1) : 0)
+      .delay((d, i) =>
+        animationsEnabled ? i * 50 * Math.pow(animationSpeed, -1) * 2 : 0
+      )
       .attr("y", (d) => y(d.Count) - 5)
       .text((d) => d.Name);
 
