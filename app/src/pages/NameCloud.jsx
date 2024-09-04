@@ -62,17 +62,17 @@ const TimelineWithWordCloud = ({ data }) => {
   useEffect(() => {
     if (pendingWordCloudData.length === 0) return;
 
-    const sizeScale = d3
-      .scaleLinear()
-      .domain([
-        d3.min(pendingWordCloudData, (d) => d.size),
-        d3.max(pendingWordCloudData, (d) => d.size),
-      ])
-      .range([10, 100]);
-
     const limitedData = pendingWordCloudData
       .sort((a, b) => b.size - a.size)
       .slice(0, maxNames);
+
+    const sizeScale = d3
+      .scaleLog()
+      .domain([
+        d3.min(limitedData, (d) => d.size),
+        d3.max(limitedData, (d) => d.size),
+      ])
+      .range([5, 60]);
 
     const layout = cloud()
       .size([800, 400])
