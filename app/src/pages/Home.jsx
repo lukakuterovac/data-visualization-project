@@ -63,7 +63,7 @@ const Home = () => {
         </p>
         <ul className="list-disc list-inside text-lg text-justify">
           <li>Visualize the popularity trend of a name on bar charts</li>
-          <li>FCompare data for two names on one graph</li>
+          <li>Compare data for two names on one graph</li>
           <li>Interactive word cloud visualization with a playable timeline</li>
         </ul>
       </section>
